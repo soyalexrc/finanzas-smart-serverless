@@ -15,9 +15,16 @@ export class AuthService {
   ) {}
 
   async register(body: CreateUserDto) {
-    const hashedPassword = await bcrypt.hash(body.password, 10);
-    const newUser = new this.userModel({ ...body, password: hashedPassword });
-    return newUser.save();
+    try {
+      const hashedPassword = await bcrypt.hash(body.password, 10);
+      const newUser = new this.userModel({ ...body, password: hashedPassword });
+      const data = await newUser.save();
+      return data;
+    } catch (error) {
+      return {
+        message: error.message,
+      };
+    }
   }
 
   async validateUser(email: string, password: string, res: Response) {

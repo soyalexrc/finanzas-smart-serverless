@@ -11,7 +11,9 @@ import { TransactionService } from './transaction.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import {FindTransactionByUserDto} from "./dto/find-transaction-by-user.dto";
+import {Auth} from "../auth/decorators/auth.decorator";
 
+@Auth()
 @Controller('transaction')
 export class TransactionController {
   constructor(private readonly transactionService: TransactionService) {}
