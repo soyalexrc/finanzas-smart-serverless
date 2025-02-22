@@ -34,7 +34,11 @@ export class TransactionService {
         if (dateTo) filter.date.$lte = new Date(dateTo);
       }
 
-      return await this.transactionModel.find(filter).sort({ date: -1 }).lean();
+      return await this.transactionModel
+        .find(filter)
+        .populate(['category', 'currency'])
+        .sort({ date: -1 })
+        .lean();
     } catch (error) {
       throw new Error(`Error listing transactions: ${error.message}`);
     }
