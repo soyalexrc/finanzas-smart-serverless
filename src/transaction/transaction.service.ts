@@ -1,10 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Transaction } from './entities/transaction.entity';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FindTransactionByUserDto } from './dto/find-transaction-by-user.dto';
+import { GetStatisticsByCurrencyYearDto } from './dto/get-statistics-by-currency-year.dto';
+import {
+  endOfMonth,
+  startOfDay,
+  startOfMonth,
+  subDays,
+  subMonths,
+} from 'date-fns';
 
 @Injectable()
 export class TransactionService {
@@ -18,6 +26,217 @@ export class TransactionService {
       return await this.transactionModel.create(seedDto);
     } catch (error) {
       throw new Error(`Error creating transaction: ${error.message}`);
+    }
+  }
+
+  async getStatisticsByCurrencyAndYear(body: GetStatisticsByCurrencyYearDto) {
+    const { userId, currency, year } = body;
+    const today = startOfDay(new Date());
+
+    const startOfMonthDate = startOfMonth(today);
+    const startOfLastMonthDate = startOfMonth(subMonths(today, 1));
+    const endOfLastMonthDate = endOfMonth(subMonths(today, 1));
+    const startOfWeekDate = startOfDay(subDays(today, 7));
+
+    try {
+      const expenses = await this.transactionModel.aggregate([
+        {
+          $match: {
+            user: new Types.ObjectId(userId),
+            currency: new Types.ObjectId(currency),
+            date: {
+              $gte: new Date(`${year}-01-01T00:00:00.000Z`), // Start of the year
+              $lte: new Date(`${year}-12-31T23:59:59.999Z`), // End of the year
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: 'categories',
+            localField: 'category',
+            foreignField: '_id',
+            as: 'categoryDetails',
+          },
+        },
+        { $unwind: '$categoryDetails' },
+        {
+          $match: {
+            'categoryDetails.type': 'expense', // Only include expenses
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalSpentOnYear: { $sum: '$amount' }, // Total spent in the entire year
+            totalCurrentMonth: {
+              $sum: {
+                $cond: [{ $gte: ['$date', startOfMonthDate] }, '$amount', 0],
+              },
+            },
+            totalLastMonth: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $gte: ['$date', startOfLastMonthDate] },
+                      { $lte: ['$date', endOfLastMonthDate] },
+                    ],
+                  },
+                  '$amount',
+                  0,
+                ],
+              },
+            },
+            totalLastWeek: {
+              $sum: {
+                $cond: [{ $gte: ['$date', startOfWeekDate] }, '$amount', 0],
+              },
+            },
+          },
+        },
+      ]);
+
+      return expenses.length > 0
+        ? expenses[0]
+        : {
+            totalSpentOnYear: 0,
+            totalCurrentMonth: 0,
+            totalLastMonth: 0,
+            totalLastWeek: 0,
+          };
+    } catch (error) {
+      throw new Error(`Error listing transactions: ${error.message}`);
+    }
+  }
+
+  async getMonthlyStatistics(body: GetStatisticsByCurrencyYearDto) {
+    const { userId, currency, year } = body;
+
+    try {
+      const transactions = await this.transactionModel.aggregate([
+        {
+          $match: {
+            user: new Types.ObjectId(userId),
+            currency: new Types.ObjectId(currency),
+            date: {
+              $gte: new Date(`${year}-01-01T00:00:00.000Z`),
+              $lte: new Date(`${year}-12-31T23:59:59.999Z`),
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: 'categories',
+            localField: 'category',
+            foreignField: '_id',
+            as: 'categoryDetails',
+          },
+        },
+        { $unwind: '$categoryDetails' },
+        {
+          $group: {
+            _id: {
+              month: { $month: '$date' },
+              type: '$categoryDetails.type', // Categorize as 'expense' or 'income'
+            },
+            totalAmount: { $sum: '$amount' },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.month',
+            expense: {
+              $sum: {
+                $cond: [{ $eq: ['$_id.type', 'expense'] }, '$totalAmount', 0],
+              },
+            },
+            income: {
+              $sum: {
+                $cond: [{ $eq: ['$_id.type', 'income'] }, '$totalAmount', 0],
+              },
+            },
+          },
+        },
+        { $sort: { _id: 1 } }, // Sort by month
+      ]);
+
+      const months = [
+        { name: 'Enero', nameShort: 'Ene' },
+        { name: 'Febrero', nameShort: 'Feb' },
+        { name: 'Marzo', nameShort: 'Mar' },
+        { name: 'Abril', nameShort: 'Abr' },
+        { name: 'Mayo', nameShort: 'May' },
+        { name: 'Junio', nameShort: 'Jun' },
+        { name: 'Julio', nameShort: 'Jul' },
+        { name: 'Agosto', nameShort: 'Ago' },
+        { name: 'Septiembre', nameShort: 'Sep' },
+        { name: 'Octubre', nameShort: 'Oct' },
+        { name: 'Noviembre', nameShort: 'Nov' },
+        { name: 'Diciembre', nameShort: 'Dic' },
+      ];
+
+      const result = months.map((month, index) => {
+        const item = transactions.find((t) => t._id === index + 1);
+        return {
+          name: month.name,
+          nameShort: month.nameShort,
+          expense: item ? item.expense : 0,
+          income: item ? item.income : 0,
+        };
+      });
+
+      return result;
+    } catch (error) {
+      throw new Error(`Error getting monthly statistics: ${error.message}`);
+    }
+  }
+
+  async getYearlyExpensesByCategory(body: GetStatisticsByCurrencyYearDto) {
+    const { userId, currency, year } = body;
+
+    try {
+      const expensesByCategory = await this.transactionModel.aggregate([
+        {
+          $match: {
+            user: new Types.ObjectId(userId),
+            currency: new Types.ObjectId(currency),
+            date: {
+              $gte: new Date(`${year}-01-01T00:00:00.000Z`),
+              $lte: new Date(`${year}-12-31T23:59:59.999Z`),
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: 'categories',
+            localField: 'category',
+            foreignField: '_id',
+            as: 'categoryDetails',
+          },
+        },
+        { $unwind: '$categoryDetails' },
+        {
+          $match: {
+            'categoryDetails.type': 'expense', // Only include expenses
+          },
+        },
+        {
+          $group: {
+            _id: '$categoryDetails.title', // Group by category name
+            totalAmount: { $sum: '$amount' }, // Sum all expenses per category
+          },
+        },
+        { $sort: { totalAmount: -1 } }, // Sort from highest to lowest
+      ]);
+
+      return expensesByCategory.map((item) => ({
+        name: item._id, // Category name
+        value: item.totalAmount, // Expense amount
+      }));
+    } catch (error) {
+      throw new Error(
+        `Error getting yearly expenses by category: ${error.message}`,
+      );
     }
   }
 
