@@ -1,7 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { isValidObjectId, Model, Types } from 'mongoose';
 import { Transaction } from './entities/transaction.entity';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FindTransactionByUserDto } from './dto/find-transaction-by-user.dto';
@@ -241,23 +246,84 @@ export class TransactionService {
   }
 
   async findByUser(findTransactionsByUserDto: FindTransactionByUserDto) {
-    const { userId, dateFrom, dateTo } = findTransactionsByUserDto;
+    const { userId, dateFrom, dateTo, searchTerm } = findTransactionsByUserDto;
 
     try {
-      const filter: any = { user: userId };
+      const matchStage: any = { user: new Types.ObjectId(userId) };
 
       // Add date filtering if provided
       if (dateFrom || dateTo) {
-        filter.date = {};
-        if (dateFrom) filter.date.$gte = new Date(dateFrom);
-        if (dateTo) filter.date.$lte = new Date(dateTo);
+        matchStage.date = {};
+        if (dateFrom) matchStage.date.$gte = new Date(dateFrom);
+        if (dateTo) matchStage.date.$lte = new Date(dateTo);
       }
 
-      return await this.transactionModel
-        .find(filter)
-        .populate(['category', 'currency'])
-        .sort({ date: -1 })
-        .lean();
+      const transactions = await this.transactionModel.aggregate([
+        { $match: matchStage }, // First, filter transactions by user & date
+
+        // Lookup categories
+        {
+          $lookup: {
+            from: 'categories',
+            localField: 'category',
+            foreignField: '_id',
+            as: 'categoryDetails',
+          },
+        },
+        {
+          $unwind: {
+            path: '$categoryDetails',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+
+        // Lookup currencies
+        {
+          $lookup: {
+            from: 'currencies',
+            localField: 'currency',
+            foreignField: '_id',
+            as: 'currencyDetails',
+          },
+        },
+        { $unwind: '$currencyDetails' },
+
+        // **NOW filter by searchTerm**
+        {
+          $match:
+            searchTerm && searchTerm.trim() !== ''
+              ? {
+                  $or: [
+                    { title: { $regex: searchTerm, $options: 'i' } }, // Search in title
+                    { description: { $regex: searchTerm, $options: 'i' } }, // Search in description
+                    {
+                      'categoryDetails.title': {
+                        $regex: searchTerm,
+                        $options: 'i',
+                      },
+                    }, // Search in category title
+                  ],
+                }
+              : {},
+        },
+
+        // Sort by date (latest first)
+        { $sort: { date: -1 } },
+
+        // Select only necessary fields
+        {
+          $project: {
+            title: 1,
+            description: 1,
+            date: 1,
+            amount: 1,
+            category: '$categoryDetails',
+            currency: '$currencyDetails',
+          },
+        },
+      ]);
+
+      return transactions;
     } catch (error) {
       throw new Error(`Error listing transactions: ${error.message}`);
     }
@@ -281,7 +347,25 @@ export class TransactionService {
     return `This action updates a #${id} transaction`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} transaction`;
+  async remove(id: string) {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException('ID invalido');
+    }
+
+    try {
+      const deletedTransaction =
+        await this.transactionModel.findByIdAndDelete(id);
+      if (!deletedTransaction) {
+        throw new NotFoundException('No se encontro la transaccion');
+      }
+      return {
+        message: 'Transaccion eliminada exitosamente!',
+        deletedTransaction,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Error deleting transaction: ${error.message}`,
+      );
+    }
   }
 }

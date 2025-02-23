@@ -14,12 +14,12 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(body: CreateUserDto) {
+  async register(body: CreateUserDto, res: Response) {
     try {
       const hashedPassword = await bcrypt.hash(body.password, 10);
       const newUser = new this.userModel({ ...body, password: hashedPassword });
       const data = await newUser.save();
-      return data;
+      return this.validateUser(data.email, body.password, res, true);
     } catch (error) {
       return {
         message: error.message,
@@ -27,7 +27,12 @@ export class AuthService {
     }
   }
 
-  async validateUser(email: string, password: string, res: Response) {
+  async validateUser(
+    email: string,
+    password: string,
+    res: Response,
+    isRegister = false,
+  ) {
     try {
       const user: any = await this.userModel.findOne({ email });
       if (!user) {
@@ -49,7 +54,7 @@ export class AuthService {
 
           // Send success response
           return res.status(200).json({
-            message: `Bienvenido de vuelta, ${user.firstname}!`,
+            message: `Bienvenido ${!isRegister && 'de vuelta'}, ${user.firstname}!`,
             user: { ...userObj, access_token },
           });
         }

@@ -1,4 +1,4 @@
-import { IsDate, IsMongoId, IsOptional } from 'class-validator';
+import { IsDate, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class FindTransactionByUserDto {
@@ -9,6 +9,10 @@ export class FindTransactionByUserDto {
   @IsOptional()
   @Type(() => Date)
   dateFrom?: Date;
+
+  @IsString()
+  @IsOptional()
+  searchTerm?: string;
 
   @IsDate()
   @IsOptional()

@@ -1,8 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {Controller, Get, Post, Body, Patch, Param, Delete, Res} from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {Auth} from "../auth/decorators/auth.decorator";
+import {MarkFavCurrencyDto} from "./dto/mark-fav-currency.dto";
+import {Response} from "express";
 
 @Auth()
 @Controller('user')
@@ -12,6 +14,11 @@ export class UserController {
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
+  }
+
+  @Post('markFavCurrency')
+  markFavCurrency(@Body() body: MarkFavCurrencyDto) {
+    return this.userService.markFavCurrency(body);
   }
 
   @Get()

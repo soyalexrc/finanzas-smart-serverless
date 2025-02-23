@@ -21,6 +21,9 @@ export class User {
   password: string;
 
   @Prop()
+  favCurrencies?: string[];
+
+  @Prop()
   photoUrl?: string;
 
   // @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Organization' })
