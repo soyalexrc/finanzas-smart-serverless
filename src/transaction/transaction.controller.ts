@@ -59,7 +59,7 @@ export class TransactionController {
     @Param('id') id: string,
     @Body() updateTransactionDto: UpdateTransactionDto,
   ) {
-    return this.transactionService.update(+id, updateTransactionDto);
+    return this.transactionService.update(id, updateTransactionDto);
   }
 
   @Delete(':id')

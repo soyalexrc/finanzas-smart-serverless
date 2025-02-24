@@ -317,6 +317,8 @@ export class TransactionService {
             description: 1,
             date: 1,
             amount: 1,
+            images: 1,
+            documents: 1,
             category: '$categoryDetails',
             currency: '$currencyDetails',
           },
@@ -343,8 +345,24 @@ export class TransactionService {
     return `This action returns a #${id} transaction`;
   }
 
-  update(id: number, updateTransactionDto: UpdateTransactionDto) {
-    return `This action updates a #${id} transaction`;
+  async update(id: string, updateTransactionDto: UpdateTransactionDto) {
+    try {
+      const updatedTransaction = await this.transactionModel.findByIdAndUpdate(
+        id,
+        { $set: updateTransactionDto },
+        { new: true, runValidators: true }, // Returns the updated document and ensures validation
+      );
+
+      if (!updatedTransaction) {
+        throw new NotFoundException(`Transaction with ID ${id} not found`);
+      }
+
+      return updatedTransaction;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Error updating transaction: ${error.message}`,
+      );
+    }
   }
 
   async remove(id: string) {
