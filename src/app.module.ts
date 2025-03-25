@@ -8,6 +8,7 @@ import { AccountModule } from './account/account.module';
 import { CardModule } from './card/card.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { CurrencyModule } from './currency/currency.module';
+import { CalendarModule } from './calendar/calendar.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { CurrencyModule } from './currency/currency.module';
     CardModule,
     TransactionModule,
     CurrencyModule,
+    CalendarModule,
   ],
   controllers: [],
   providers: [],

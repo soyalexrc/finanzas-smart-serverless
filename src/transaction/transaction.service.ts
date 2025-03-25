@@ -18,6 +18,7 @@ import {
   subDays,
   subMonths,
 } from 'date-fns';
+import { GetStatisticsByCurrencyMonthDto } from './dto/get-stadistics-by-currency-month';
 
 @Injectable()
 export class TransactionService {
@@ -241,6 +242,126 @@ export class TransactionService {
     } catch (error) {
       throw new Error(
         `Error getting yearly expenses by category: ${error.message}`,
+      );
+    }
+  }
+
+  async getMonthlyTransactionsByCategory(
+    body: GetStatisticsByCurrencyMonthDto,
+  ) {
+    const { userId } = body;
+    const now = new Date();
+    const firstDay = startOfMonth(now);
+    const lastDay = endOfMonth(now);
+
+    firstDay.setUTCHours(0, 0, 0, 0);
+    lastDay.setUTCHours(23, 59, 59, 999);
+
+    try {
+      const transactionsByCategory = await this.transactionModel.aggregate([
+        {
+          $match: {
+            user: new Types.ObjectId(userId),
+            date: { $gte: firstDay, $lte: lastDay },
+          },
+        },
+        {
+          $lookup: {
+            from: 'categories',
+            localField: 'category',
+            foreignField: '_id',
+            as: 'categoryDetails',
+          },
+        },
+        { $unwind: '$categoryDetails' },
+        {
+          $lookup: {
+            from: 'currencies',
+            localField: 'currency',
+            foreignField: '_id',
+            as: 'currencyDetails',
+          },
+        },
+        { $unwind: '$currencyDetails' },
+        {
+          $group: {
+            _id: {
+              category: '$categoryDetails.title',
+              type: '$categoryDetails.type', // Expense or Income
+              currencyId: '$currencyDetails._id',
+              currencyName: '$currencyDetails.name',
+              currencySymbol: '$currencyDetails.symbol',
+              currencyCode: '$currencyDetails.code',
+              icon: '$categoryDetails.icon',
+              day: { $dayOfMonth: '$date' },
+            },
+            dailyAmount: { $sum: '$amount' },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              category: '$_id.category',
+              type: '$_id.type',
+              icon: '$_id.icon',
+            },
+            totalAmounts: {
+              $push: {
+                currencyId: '$_id.currencyId',
+                currencyName: '$_id.currencyName',
+                currencyCode: '$_id.currencyCode',
+                currencySymbol: '$_id.currencySymbol',
+                amount: '$dailyAmount',
+              },
+            },
+            dailyData: {
+              $push: {
+                day: '$_id.day',
+                currencyId: '$_id.currencyId',
+                currencyName: '$_id.currencyName',
+                currencyCode: '$_id.currencyCode',
+                currencySymbol: '$_id.currencySymbol',
+                amount: '$dailyAmount',
+              },
+            },
+          },
+        },
+        { $sort: { 'totalAmounts.amount': -1 } },
+      ]);
+
+      return transactionsByCategory.map((item) => ({
+        category: item._id,
+        value: item.totalAmounts.map((data) => ({
+          currencyCode: data.currencyCode,
+          currencySymbol: data.currencySymbol,
+          amount: data.amount,
+        })), // Array of currency objects
+        dataPoints: item.dailyData.reduce((acc, data) => {
+          const dayEntry = acc.find((d) => d.day === data.day);
+          if (!dayEntry) {
+            acc.push({
+              day: data.day,
+              currencies: [
+                {
+                  currencyCode: data.currencyCode,
+                  currencySymbol: data.currencySymbol,
+                  amount: data.amount,
+                },
+              ],
+            });
+          } else {
+            dayEntry.currencies.push({
+              currencyCode: data.currencyCode,
+              currencySymbol: data.currencySymbol,
+              amount: data.amount,
+            });
+          }
+          return acc;
+        }, []),
+      }));
+    } catch (error) {
+      throw new Error(
+        `Error getting monthly transactions by category: ${error.message}`,
       );
     }
   }

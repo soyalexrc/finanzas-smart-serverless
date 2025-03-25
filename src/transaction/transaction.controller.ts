@@ -49,6 +49,11 @@ export class TransactionController {
     return this.transactionService.getYearlyExpensesByCategory(body);
   }
 
+  @Post('getMonthlyExpensesByCategory')
+  getMonthlyExpensesByCategory(@Body() body: GetStatisticsByCurrencyYearDto) {
+    return this.transactionService.getMonthlyTransactionsByCategory(body);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.transactionService.findOne(+id);

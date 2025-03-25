@@ -1,10 +1,20 @@
-import {Controller, Get, Post, Body, Patch, Param, Delete, Res} from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Res,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import {Auth} from "../auth/decorators/auth.decorator";
-import {MarkFavCurrencyDto} from "./dto/mark-fav-currency.dto";
-import {Response} from "express";
+import { Auth } from '../auth/decorators/auth.decorator';
+import { MarkFavCurrencyDto } from './dto/mark-fav-currency.dto';
+import { Response } from 'express';
+import { CheckUsersByEmailDto } from './dto/check-users-by-email.dto';
 
 @Auth()
 @Controller('user')
@@ -19,6 +29,15 @@ export class UserController {
   @Post('markFavCurrency')
   markFavCurrency(@Body() body: MarkFavCurrencyDto) {
     return this.userService.markFavCurrency(body);
+  }
+
+  @Post('checkUsersByEmail')
+  async checkUsersByEmail(
+    @Body() body: CheckUsersByEmailDto,
+    @Res() res: Response,
+  ) {
+    const result = await this.userService.checkUsersByEmail(body);
+    return res.status(200).send(result);
   }
 
   @Get()
