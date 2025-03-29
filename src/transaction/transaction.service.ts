@@ -341,31 +341,32 @@ export class TransactionService {
             },
           },
         },
-        { $sort: { 'totalAmounts.amount': -1 } },
       ]);
 
-      return transactionsByCategory.map((item) => ({
-        category: item._id,
-        value: parseFloat(
-          item.totalAmounts
-            .reduce((sum, data) => sum + data.amount, 0)
-            .toFixed(2),
-        ),
-        dataPoints: item.dailyData.reduce((acc, data) => {
-          const dayEntry = acc.find((d) => d.day === data.day);
-          if (!dayEntry) {
-            acc.push({
-              day: data.day,
-              amount: data.amount,
-            });
-          } else {
-            dayEntry.currencies.push({
-              amount: data.amount,
-            });
-          }
-          return acc;
-        }, []),
-      }));
+      return transactionsByCategory
+        .map((item) => ({
+          category: item._id,
+          value: parseFloat(
+            item.totalAmounts
+              .reduce((sum, data) => sum + data.amount, 0)
+              .toFixed(2),
+          ),
+          dataPoints: item.dailyData.reduce((acc, data) => {
+            const dayEntry = acc.find((d) => d.day === data.day);
+            if (!dayEntry) {
+              acc.push({
+                day: data.day,
+                amount: data.amount,
+              });
+            } else {
+              dayEntry.currencies.push({
+                amount: data.amount,
+              });
+            }
+            return acc;
+          }, []),
+        }))
+        .sort((a, b) => b.value - a.value); // Sort by value in descending order
     } catch (error) {
       throw new Error(
         `Error getting monthly transactions by category: ${error.message}`,
