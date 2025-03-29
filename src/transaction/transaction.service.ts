@@ -249,7 +249,7 @@ export class TransactionService {
   async getMonthlyTransactionsByCategory(
     body: GetStatisticsByCurrencyMonthDto,
   ) {
-    const { userId } = body;
+    const { userId, categoryType, currencyId } = body;
     const now = new Date();
     const firstDay = startOfMonth(now);
     const lastDay = endOfMonth(now);
@@ -262,6 +262,7 @@ export class TransactionService {
         {
           $match: {
             user: new Types.ObjectId(userId),
+            currency: new Types.ObjectId(currencyId),
             date: { $gte: firstDay, $lte: lastDay },
           },
         },
@@ -275,23 +276,28 @@ export class TransactionService {
         },
         { $unwind: '$categoryDetails' },
         {
-          $lookup: {
-            from: 'currencies',
-            localField: 'currency',
-            foreignField: '_id',
-            as: 'currencyDetails',
+          $match: {
+            'categoryDetails.type': categoryType, // Filter by category type (income/expense)
           },
         },
-        { $unwind: '$currencyDetails' },
+        // {
+        //   $lookup: {
+        //     from: 'currencies',
+        //     localField: 'currency',
+        //     foreignField: '_id',
+        //     as: 'currencyDetails',
+        //   },
+        // },
+        // { $unwind: '$currencyDetails' },
         {
           $group: {
             _id: {
-              category: '$categoryDetails.title',
-              type: '$categoryDetails.type', // Expense or Income
-              currencyId: '$currencyDetails._id',
-              currencyName: '$currencyDetails.name',
-              currencySymbol: '$currencyDetails.symbol',
-              currencyCode: '$currencyDetails.code',
+              title: '$categoryDetails.title',
+              // type: '$categoryDetails.type', // Expense or Income
+              // currencyId: '$currencyDetails._id',
+              // currencyName: '$currencyDetails.name',
+              // currencySymbol: '$currencyDetails.symbol',
+              // currencyCode: '$currencyDetails.code',
               icon: '$categoryDetails.icon',
               day: { $dayOfMonth: '$date' },
             },
@@ -301,26 +307,26 @@ export class TransactionService {
         {
           $group: {
             _id: {
-              category: '$_id.category',
+              title: '$_id.title',
               type: '$_id.type',
               icon: '$_id.icon',
             },
             totalAmounts: {
               $push: {
-                currencyId: '$_id.currencyId',
-                currencyName: '$_id.currencyName',
-                currencyCode: '$_id.currencyCode',
-                currencySymbol: '$_id.currencySymbol',
+                // currencyId: '$_id.currencyId',
+                // currencyName: '$_id.currencyName',
+                // currencyCode: '$_id.currencyCode',
+                // currencySymbol: '$_id.currencySymbol',
                 amount: '$dailyAmount',
               },
             },
             dailyData: {
               $push: {
                 day: '$_id.day',
-                currencyId: '$_id.currencyId',
-                currencyName: '$_id.currencyName',
-                currencyCode: '$_id.currencyCode',
-                currencySymbol: '$_id.currencySymbol',
+                // currencyId: '$_id.currencyId',
+                // currencyName: '$_id.currencyName',
+                // currencyCode: '$_id.currencyCode',
+                // currencySymbol: '$_id.currencySymbol',
                 amount: '$dailyAmount',
               },
             },
@@ -331,28 +337,16 @@ export class TransactionService {
 
       return transactionsByCategory.map((item) => ({
         category: item._id,
-        value: item.totalAmounts.map((data) => ({
-          currencyCode: data.currencyCode,
-          currencySymbol: data.currencySymbol,
-          amount: data.amount,
-        })), // Array of currency objects
+        value: item.totalAmounts.reduce((sum, data) => sum + data.amount, 0), // Summing all amounts
         dataPoints: item.dailyData.reduce((acc, data) => {
           const dayEntry = acc.find((d) => d.day === data.day);
           if (!dayEntry) {
             acc.push({
               day: data.day,
-              currencies: [
-                {
-                  currencyCode: data.currencyCode,
-                  currencySymbol: data.currencySymbol,
-                  amount: data.amount,
-                },
-              ],
+              amount: data.amount,
             });
           } else {
             dayEntry.currencies.push({
-              currencyCode: data.currencyCode,
-              currencySymbol: data.currencySymbol,
               amount: data.amount,
             });
           }

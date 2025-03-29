@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Res,
 } from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
@@ -13,6 +14,8 @@ import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { FindTransactionByUserDto } from './dto/find-transaction-by-user.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { GetStatisticsByCurrencyYearDto } from './dto/get-statistics-by-currency-year.dto';
+import { GetStatisticsByCurrencyMonthDto } from './dto/get-stadistics-by-currency-month';
+import { Response } from 'express';
 
 @Auth()
 @Controller('transaction')
@@ -50,8 +53,13 @@ export class TransactionController {
   }
 
   @Post('getMonthlyExpensesByCategory')
-  getMonthlyExpensesByCategory(@Body() body: GetStatisticsByCurrencyYearDto) {
-    return this.transactionService.getMonthlyTransactionsByCategory(body);
+  async getMonthlyExpensesByCategory(
+    @Body() body: GetStatisticsByCurrencyMonthDto,
+    @Res() res: Response,
+  ) {
+    const result =
+      await this.transactionService.getMonthlyTransactionsByCategory(body);
+    return res.status(200).send(result);
   }
 
   @Get(':id')
