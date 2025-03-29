@@ -103,7 +103,16 @@ export class TransactionService {
       ]);
 
       return expenses.length > 0
-        ? expenses[0]
+        ? {
+            totalSpentOnYear: parseFloat(
+              expenses[0].totalSpentOnYear.toFixed(2),
+            ),
+            totalCurrentMonth: parseFloat(
+              expenses[0].totalCurrentMonth.toFixed(2),
+            ),
+            totalLastMonth: parseFloat(expenses[0].totalLastMonth.toFixed(2)),
+            totalLastWeek: parseFloat(expenses[0].totalLastWeek.toFixed(2)),
+          }
         : {
             totalSpentOnYear: 0,
             totalCurrentMonth: 0,
@@ -337,7 +346,11 @@ export class TransactionService {
 
       return transactionsByCategory.map((item) => ({
         category: item._id,
-        value: item.totalAmounts.reduce((sum, data) => sum + data.amount, 0), // Summing all amounts
+        value: parseFloat(
+          item.totalAmounts
+            .reduce((sum, data) => sum + data.amount, 0)
+            .toFixed(2),
+        ),
         dataPoints: item.dailyData.reduce((acc, data) => {
           const dayEntry = acc.find((d) => d.day === data.day);
           if (!dayEntry) {
