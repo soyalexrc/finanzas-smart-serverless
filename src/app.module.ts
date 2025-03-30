@@ -23,6 +23,7 @@ import { CalendarModule } from './calendar/calendar.module';
     }),
     AuthModule,
     UserModule,
+    CalendarModule,
     CategoryModule,
     AccountModule,
     CardModule,
