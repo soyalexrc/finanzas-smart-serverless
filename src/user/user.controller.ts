@@ -15,6 +15,7 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { MarkFavCurrencyDto } from './dto/mark-fav-currency.dto';
 import { Response } from 'express';
 import { CheckUsersByEmailDto } from './dto/check-users-by-email.dto';
+import {UpdateTokenPushDto} from "./dto/update-token-push.dto";
 
 @Auth()
 @Controller('user')
@@ -38,6 +39,11 @@ export class UserController {
   ) {
     const result = await this.userService.checkUsersByEmail(body);
     return res.status(200).send(result);
+  }
+
+  @Post('updatePushToken')
+  updatePushToken(@Body() body: UpdateTokenPushDto) {
+    return this.userService.updatePushToken(body);
   }
 
   @Get()
