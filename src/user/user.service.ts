@@ -97,13 +97,15 @@ export class UserService {
           message: `Los siguientes usuarios no existen en el sistema y se les enviará un mensaje de invitacion: ${notFoundEmails.join(', ')}`,
           participants,
           participantsDetail,
+          notFoundEmails,
         };
       }
 
       return {
+        message: '',
         participants,
         participantsDetail,
-        message: '',
+        notFoundEmails,
       };
     } catch (error) {
       throw new InternalServerErrorException(

@@ -503,7 +503,11 @@ export class TransactionService {
       const deletedTransaction =
         await this.transactionModel.findByIdAndDelete(id);
       if (!deletedTransaction) {
-        throw new NotFoundException('No se encontro la transaccion');
+        // throw new NotFoundException('No se encontro la transaccion');
+        return {
+          message: 'No se encontro transaccion para eliminar!',
+          deletedTransaction: {},
+        };
       }
       return {
         message: 'Transaccion eliminada exitosamente!',
