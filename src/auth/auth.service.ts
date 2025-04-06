@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -321,6 +321,16 @@ export class AuthService {
         console.error(`Authentication verification failed for email: ${email}`);
         throw new Error('Registration verification failed');
       }
+    }
+  }
+
+  async getPasskeysByUserId(userId: string) {
+    try {
+      return await this.passkeyModel.find({ user: userId });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Error al consultar las llaves de acceso: ${error.message}`,
+      );
     }
   }
 }

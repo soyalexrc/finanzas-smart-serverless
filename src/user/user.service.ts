@@ -11,6 +11,7 @@ import { Model } from 'mongoose';
 import { User } from './entities/user.entity';
 import { CheckUsersByEmailDto } from './dto/check-users-by-email.dto';
 import { UpdateTokenPushDto } from './dto/update-token-push.dto';
+import { Passkey } from '../auth/entities/passkey.entity';
 
 @Injectable()
 export class UserService {

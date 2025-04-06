@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Request, Res } from '@nestjs/common';
+import {Controller, Post, Body, Request, Res, Get, Query} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { Response } from 'express';
@@ -52,6 +52,11 @@ export class AuthController {
   @Post('start-authentication')
   async startAuthentication(@Body() body: { email: string }) {
     return await this.authService.startAuthentication(body.email);
+  }
+
+  @Get('getPasskeysByUserId')
+  getPasskeysByUserId(@Query() query: { userId: string }) {
+    return this.authService.getPasskeysByUserId(query.userId);
   }
 
   @Post('complete-authentication')

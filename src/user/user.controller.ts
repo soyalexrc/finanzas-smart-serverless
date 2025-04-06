@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Res,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -15,7 +16,7 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { MarkFavCurrencyDto } from './dto/mark-fav-currency.dto';
 import { Response } from 'express';
 import { CheckUsersByEmailDto } from './dto/check-users-by-email.dto';
-import {UpdateTokenPushDto} from "./dto/update-token-push.dto";
+import { UpdateTokenPushDto } from './dto/update-token-push.dto';
 
 @Auth()
 @Controller('user')
