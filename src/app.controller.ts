@@ -6,7 +6,18 @@ export class AppController {
   @Get('/.well-known/apple-app-site-association')
   async getAppleAppSiteAssociation(@Res() res: Response) {
     const jsonResponse = {
-      applinks: {},
+      applinks: {
+        apps: [],
+        details: [
+          {
+            appID: '86978KA5GP.com.alexrc.finanzasok2404', // Example app identifier
+            paths: ['*'], // Example paths
+          },
+        ],
+      },
+      activityContinuation: {
+        apps: ['86978KA5GP.com.alexrc.finanzasok2404'], // Example app identifier
+      },
       webcredentials: {
         apps: ['86978KA5GP.com.alexrc.finanzasok2404'], // Example app identifier
       },
