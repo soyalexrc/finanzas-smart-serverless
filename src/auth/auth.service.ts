@@ -113,7 +113,7 @@ export class AuthService {
 
     if (user) {
       console.log(`User found: ${user._id}`);
-      passkeys = await this.passkeyModel.find({ userId: user._id });
+      passkeys = await this.passkeyModel.find({ user: user._id });
     }
     const challenge = uuidv4(); // Store this in the DB for the user
     console.log(`Generated challenge: ${challenge}`);
@@ -164,7 +164,9 @@ export class AuthService {
       throw new Error('User not found');
     }
 
-    passkeys = await this.passkeyModel.find({ userId: user._id });
+    passkeys = await this.passkeyModel.find({ user: user._id });
+    const allPasskeys = await this.passkeyModel.find();
+    console.log(allPasskeys);
     console.log(`Found passkeys: ${JSON.stringify(passkeys)}`);
 
     const authenticationOptions = await generateAuthenticationOptions({
