@@ -6,14 +6,11 @@ export class AppController {
   @Get('/.well-known/apple-app-site-association')
   async getAppleAppSiteAssociation(@Res() res: Response) {
     const jsonResponse = {
-      applinks: {
-        details: [
-          {
-            appID: 'ABCDE12345.com.example.app', // Example appID
-            paths: ['/', '/about', '/contact'], // Example paths
-          },
-        ],
+      applinks: {},
+      webcredentials: {
+        apps: ['86978KA5GP.com.alexrc.finanzasok2404'], // Example app identifier
       },
+      appclips: {},
     };
 
     // Set Content-Type to application/json
