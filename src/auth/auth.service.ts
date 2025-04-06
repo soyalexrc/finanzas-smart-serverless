@@ -119,10 +119,11 @@ export class AuthService {
     console.log(`Generated challenge: ${challenge}`);
 
     // Generate the registration challenge
-    const registrationOptions = generateRegistrationOptions({
+    const registrationOptions = await generateRegistrationOptions({
       rpName: 'Finanzas Inteligentes',
       rpID: 'finanzas-ok-backend-589962407829.us-central1.run.app',
       userName: email,
+      userDisplayName: email,
       challenge,
       excludeCredentials:
         passkeys.length > 0
@@ -166,7 +167,7 @@ export class AuthService {
     passkeys = await this.passkeyModel.find({ userId: user._id });
     console.log(`Found passkeys: ${JSON.stringify(passkeys)}`);
 
-    const authenticationOptions = generateAuthenticationOptions({
+    const authenticationOptions = await generateAuthenticationOptions({
       rpID: 'finanzas-ok-backend-589962407829.us-central1.run.app',
       userVerification: 'preferred',
       challenge,
