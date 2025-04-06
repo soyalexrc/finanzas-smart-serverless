@@ -9,7 +9,9 @@ import { CardModule } from './card/card.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { CurrencyModule } from './currency/currency.module';
 import { CalendarModule } from './calendar/calendar.module';
-
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { AppController } from './app.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -21,6 +23,9 @@ import { CalendarModule } from './calendar/calendar.module';
       }),
       inject: [ConfigService],
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+    }),
     AuthModule,
     UserModule,
     CalendarModule,
@@ -30,8 +35,9 @@ import { CalendarModule } from './calendar/calendar.module';
     TransactionModule,
     CurrencyModule,
     CalendarModule,
+    AppModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [],
 })
 export class AppModule {}

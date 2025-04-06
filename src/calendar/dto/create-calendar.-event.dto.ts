@@ -1,11 +1,12 @@
 import {
-    IsNotEmpty,
-    IsOptional,
-    IsEnum,
-    IsDateString,
-    IsNumber,
-    ValidateNested,
-    ArrayNotEmpty, IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsDateString,
+  IsNumber,
+  ValidateNested,
+  ArrayNotEmpty,
+  IsString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 

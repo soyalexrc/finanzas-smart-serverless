@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 import { User } from '../../user/entities/user.entity';
-import {Category} from "../../category/entities/category.entity";
-import {Currency} from "../../currency/entities/currency.entity";
+import { Category } from '../../category/entities/category.entity';
+import { Currency } from '../../currency/entities/currency.entity';
 
 export type TransactionDocument = HydratedDocument<Transaction>;
 
