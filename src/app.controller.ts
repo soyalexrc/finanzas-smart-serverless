@@ -35,7 +35,11 @@ export class AppController {
   async getAssetLinks(@Res() res: Response) {
     const jsonResponse = [
       {
-        relation: ['delegate_permission/common.get_login_creds'],
+        site: 'https://finanzas-ok-backend-589962407829.us-central1.run.app', // Example site URL
+        relation: [
+          'delegate_permission/common.get_login_creds',
+          'delegate_permission/common.handle_all_urls',
+        ],
         target: {
           namespace: 'android_app',
           package_name: 'com.alexrc.finanzas_ok', // Example package name
