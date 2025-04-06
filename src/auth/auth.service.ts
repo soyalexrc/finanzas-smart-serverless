@@ -128,7 +128,7 @@ export class AuthService {
         passkeys.length > 0
           ? passkeys.map((passkey) => ({
               id: passkey.credentialId,
-              transports: passkey.transports,
+              transports: passkey.transports as any[],
             }))
           : undefined,
       timeout: 60000, // 1-minute timeout for the registration challenge
@@ -172,7 +172,7 @@ export class AuthService {
       challenge,
       allowCredentials: passkeys.map((passkey) => ({
         id: passkey.credentialId,
-        transports: passkey.transports,
+        transports: passkey.transports as any[],
       })),
     });
 
@@ -225,7 +225,7 @@ export class AuthService {
       const newPasskey: Passkey = {
         user,
         backedUp: credentialBackedUp,
-        transports: credential.transports,
+        transports: credential.transports as any,
         credentialId: credential.id,
         publicKey: Buffer.from(credential.publicKey).toString('base64'),
         counter: credential.counter,
@@ -288,7 +288,7 @@ export class AuthService {
           id: passkey.credentialId,
           publicKey: Buffer.from(passkey.publicKey, 'base64'),
           counter: passkey.counter,
-          transports: passkey.transports,
+          transports: passkey.transports as any[],
         },
       });
 

@@ -13,7 +13,7 @@ export class Passkey {
   deviceType: string;
 
   @Prop()
-  transports: any;
+  transports: string[];
 
   @Prop()
   counter: number;
