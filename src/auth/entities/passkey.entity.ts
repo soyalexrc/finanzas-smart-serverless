@@ -14,7 +14,7 @@ export class Passkey {
   deviceType: string;
 
   @Prop()
-  transports: AuthenticatorTransportFuture[] | undefined;
+  transports: any;
 
   @Prop()
   counter: number;
