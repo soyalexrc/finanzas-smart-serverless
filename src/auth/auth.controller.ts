@@ -2,7 +2,6 @@ import { Controller, Post, Body, Request, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { Response } from 'express';
-// import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -25,5 +24,49 @@ export class AuthController {
   @Post('profile')
   getProfile(@Request() req) {
     return req.user;
+  }
+
+  //   passkeys
+
+  @Post('start-registration')
+  async startRegistration(@Body() body: { email: string }) {
+    return await this.authService.startRegistration(body.email);
+  }
+
+  @Post('complete-registration')
+  async completeRegistration(
+    @Body()
+    body: {
+      email: string;
+      challenge?: string;
+      registrationResponse: any;
+    },
+  ) {
+    return await this.authService.completeRegistration(
+      body.email,
+      body.registrationResponse,
+      body.challenge,
+    );
+  }
+
+  @Post('start-authentication')
+  async startAuthentication(@Body() body: { email: string }) {
+    return await this.authService.startAuthentication(body.email);
+  }
+
+  @Post('complete-authentication')
+  async completeAuthentication(
+    @Body()
+    body: {
+      email: string;
+      authenticationResponse: any;
+      challenge?: string;
+    },
+  ) {
+    return await this.authService.completeAuthentication(
+      body.email,
+      body.authenticationResponse,
+      body.challenge,
+    );
   }
 }

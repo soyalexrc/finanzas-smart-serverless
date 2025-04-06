@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { UserSchema } from '../user/entities/user.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { PasskeySchema } from './entities/passkey.entity';
 
 @Module({
   imports: [
@@ -23,7 +24,10 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         };
       },
     }),
-    MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: 'User', schema: UserSchema },
+      { name: 'Passkey', schema: PasskeySchema },
+    ]),
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
