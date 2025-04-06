@@ -259,7 +259,6 @@ export class AuthService {
     console.log(`Completing authentication for email: ${email}`);
     let challengeToUse: string = '';
     const user = await this.userModel.findOne({ email });
-
     if (!user) {
       console.error(`User not found: ${email}`);
       throw new Error('User not found');
@@ -267,8 +266,10 @@ export class AuthService {
 
     const passkey: Passkey | null = await this.passkeyModel.findOne({
       user: user._id,
-      credentialId: user._id,
+      credentialId: response.id,
     });
+
+    console.log('passkey to use', passkey);
 
     if (challenge) {
       challengeToUse = challenge;
