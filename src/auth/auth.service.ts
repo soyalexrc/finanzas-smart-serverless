@@ -169,13 +169,18 @@ export class AuthService {
     console.log(allPasskeys);
     console.log(`Found passkeys: ${JSON.stringify(passkeys)}`);
 
+    const safeTransports = ['usb', 'nfc', 'ble', 'internal', 'hybrid'];
+
     const authenticationOptions = await generateAuthenticationOptions({
       rpID: 'finanzas-ok-backend-589962407829.us-central1.run.app',
       userVerification: 'preferred',
       challenge,
       allowCredentials: passkeys.map((passkey) => ({
         id: passkey.credentialId,
-        transports: passkey.transports as any[],
+        type: 'public-key',
+        transport:
+          passkey.transports?.filter((t) => safeTransports.includes(t)) || [],
+        // transports: passkey.transports as any[],
       })),
     });
 
