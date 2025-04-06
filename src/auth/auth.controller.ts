@@ -38,8 +38,8 @@ export class AuthController {
     @Body()
     body: {
       email: string;
-      challenge?: string;
       registrationResponse: any;
+      challenge?: string;
     },
   ) {
     return await this.authService.completeRegistration(

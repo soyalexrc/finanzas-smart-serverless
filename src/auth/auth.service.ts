@@ -211,8 +211,10 @@ export class AuthService {
     const verification = await verifyRegistrationResponse({
       response,
       expectedChallenge: challengeToUse,
-      expectedOrigin:
+      expectedOrigin: [
         'https://finanzas-ok-backend-589962407829.us-central1.run.app',
+        'android:apk-key-hash:-eCdrJIpYllXkeZqeUGhKc1xoBKZm92XEzwxWOfugys',
+      ],
       expectedRPID: 'finanzas-ok-backend-589962407829.us-central1.run.app',
     });
 
@@ -282,8 +284,10 @@ export class AuthService {
       const verification = await verifyAuthenticationResponse({
         response: response,
         expectedChallenge: challengeToUse,
-        expectedOrigin:
+        expectedOrigin: [
           'https://finanzas-ok-backend-589962407829.us-central1.run.app',
+          'android:apk-key-hash:-eCdrJIpYllXkeZqeUGhKc1xoBKZm92XEzwxWOfugys',
+        ],
         expectedRPID: 'finanzas-ok-backend-589962407829.us-central1.run.app',
         credential: {
           id: passkey.credentialId,
