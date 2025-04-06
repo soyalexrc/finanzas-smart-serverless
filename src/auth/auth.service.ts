@@ -125,13 +125,13 @@ export class AuthService {
       userName: email,
       userDisplayName: email,
       challenge,
-      excludeCredentials:
-        passkeys.length > 0
-          ? passkeys.map((passkey) => ({
-              id: passkey.credentialId,
-              transports: passkey.transports as any[],
-            }))
-          : undefined,
+      // excludeCredentials:
+      //   passkeys.length > 0
+      //     ? passkeys.map((passkey) => ({
+      //         id: passkey.credentialId,
+      //         transports: passkey.transports as any[],
+      //       }))
+      //     : undefined,
       timeout: 60000, // 1-minute timeout for the registration challenge
       attestationType: 'none',
       authenticatorSelection: {
