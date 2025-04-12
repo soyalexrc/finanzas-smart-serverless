@@ -14,14 +14,28 @@ import {
 } from '@simplewebauthn/server';
 import { v4 as uuidv4 } from 'uuid';
 import { Passkey } from './entities/passkey.entity';
+import { ConfigService } from '@nestjs/config';
+import Mailgun from 'mailgun.js';
+import { OtpService } from './otp/otp.service';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { EmailTemplateType } from '../common/enums/email-templates';
 
 @Injectable()
 export class AuthService {
+  private mg;
   constructor(
     @InjectModel('User') private readonly userModel: Model<User>,
     @InjectModel('Passkey') private readonly passkeyModel: Model<Passkey>,
+    private otpService: OtpService,
     private readonly jwtService: JwtService,
-  ) {}
+    private configService: ConfigService,
+  ) {
+    const mailgun = new Mailgun(FormData);
+    this.mg = mailgun.client({
+      username: 'api',
+      key: this.configService.get('MAILGUN_API_KEY')!,
+    });
+  }
 
   async register(body: CreateUserDto, res: Response) {
     try {
@@ -76,7 +90,7 @@ export class AuthService {
   }
 
   login(user: any): { access_token: string } {
-    const payload = { email: user.email, sub: user.id, roles: user.roles };
+    const payload = { email: user.email, sub: user.id };
     return {
       access_token: this.jwtService.sign(payload),
     };
@@ -199,13 +213,14 @@ export class AuthService {
     let challengeToUse: string = '';
     const user = await this.userModel.findOne({ email });
 
+    if (!user) {
+      console.error(`User not found: ${email}`);
+      throw new Error('User not found');
+    }
+
     if (challenge) {
       challengeToUse = challenge;
     } else {
-      if (!user) {
-        console.error(`User not found: ${email}`);
-        throw new Error('User not found');
-      }
       if (!user.challenge) {
         console.error(`Challenge not found for user: ${email}`);
         throw new Error('Challenge not found for user');
@@ -249,7 +264,21 @@ export class AuthService {
 
     if (verification.verified) {
       console.log(`Registration verified for email: ${email}`);
-      return { success: true, message: 'Registrado exitosamente!' };
+      // 🔐 Sign a JWT and return it
+      const payload = {
+        email: user.email,
+        sub: user._id,
+      };
+      const access_token = this.jwtService.sign(payload);
+
+      const userObj: any = user.toObject();
+      delete userObj.password;
+
+      return {
+        success: true,
+        message: 'Bienvenid@!',
+        user: { ...userObj, access_token },
+      };
     } else {
       console.error(`Registration verification failed for email: ${email}`);
       throw new Error('Registration verification failed');
@@ -322,11 +351,115 @@ export class AuthService {
 
       if (verification.verified) {
         console.log(`Authentication verified for email: ${email}`);
-        return { success: true, message: 'Verificado exitosamente!' };
+        // 🔐 Sign a JWT and return it
+        const payload = {
+          email: user.email,
+          sub: user._id,
+        };
+        const access_token = this.jwtService.sign(payload);
+
+        const userObj: any = user.toObject();
+        delete userObj.password;
+
+        return {
+          success: true,
+          message: 'Bienvenid@!',
+          user: { ...userObj, access_token },
+        };
       } else {
         console.error(`Authentication verification failed for email: ${email}`);
         throw new Error('Registration verification failed');
       }
+    }
+  }
+
+  async validateUserEmailForPasskey(email: string) {
+    try {
+      const user = await this.userModel.findOne({ email });
+
+      if (!user) {
+        const otp = await this.otpService.generateOtp({ email });
+        await this.sendOtpEmail(
+          email,
+          otp,
+          EmailTemplateType.VERIFY_EMAIL_FOR_REGISTRATION,
+          'Verificación de correo electrónico',
+        );
+        return {
+          message: 'Usuario no encontrado. OTP enviado al correo.',
+          error: true,
+        };
+      }
+
+      const passkeys = await this.hasPasskeys(user?._id.toString());
+
+      if (!passkeys) {
+        const otp = await this.otpService.generateOtp({ email });
+        await this.sendOtpEmail(
+          email,
+          otp,
+          EmailTemplateType.VERIFY_EMAIL_FOR_PASSKEY_REGISTRATION,
+          'Confirma tu correo electrónico para activar el acceso con Passkey',
+          user.firstname,
+        );
+        return {
+          message: 'Usuario sin llaves de acceso. OTP enviado al correo.',
+          error: true,
+        };
+      }
+
+      if (user) {
+        return await this.startAuthentication(email);
+      }
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Error al consultar las llaves de acceso: ${error.message}`,
+      );
+    }
+  }
+
+  private async hasPasskeys(userId: string): Promise<boolean> {
+    const passkeys = await this.passkeyModel.find({ user: userId });
+    return passkeys && passkeys.length > 0;
+  }
+
+  private async sendOtpEmail(
+    email: string,
+    otp: string,
+    template: EmailTemplateType,
+    subject: string,
+    name = '',
+  ): Promise<void> {
+    const data = await this.mg.messages.create('finanzasok.xyz', {
+      from: 'postmaster@finanzasok.xyz',
+      to: [email],
+      subject,
+      template,
+      'h:X-Mailgun-Variables': JSON.stringify({
+        app_name: 'Finanzas Inteligentes',
+        name: name || email,
+        valid_time_in_minutes: 5,
+        otp,
+      }),
+    });
+    console.log(data); // logs response data
+  }
+
+  async validateEmailForRegister(dto: VerifyOtpDto, res: Response) {
+    try {
+      const result = await this.otpService.verifyOtp(dto);
+      if (result) {
+        return this.startRegistration(dto.email);
+      } else {
+        return res.status(400).send({
+          message: 'OTP inválido o expirado',
+          error: true,
+        });
+      }
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Error al consultar las llaves de acceso: ${error.message}`,
+      );
     }
   }
 

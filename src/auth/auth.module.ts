@@ -8,6 +8,8 @@ import { UserSchema } from '../user/entities/user.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { PasskeySchema } from './entities/passkey.entity';
+import {OtpSchema} from "./entities/otp.entity";
+import { OtpService } from './otp/otp.service';
 
 @Module({
   imports: [
@@ -27,9 +29,10 @@ import { PasskeySchema } from './entities/passkey.entity';
     MongooseModule.forFeature([
       { name: 'User', schema: UserSchema },
       { name: 'Passkey', schema: PasskeySchema },
+      { name: 'Otp', schema: OtpSchema },
     ]),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, OtpService],
   controllers: [AuthController],
 })
 export class AuthModule {}
