@@ -234,7 +234,7 @@ export class AuthService {
       response,
       expectedChallenge: challengeToUse,
       expectedOrigin: [
-        'https://finanzas-ok-backend-589962407829.us-central1.run.app',
+        'https://finanzasok.xyz',
         'android:apk-key-hash:-eCdrJIpYllXkeZqeUGhKc1xoBKZm92XEzwxWOfugys',
         'https://finanzasok.xyz',
       ],
@@ -323,7 +323,7 @@ export class AuthService {
         response: response,
         expectedChallenge: challengeToUse,
         expectedOrigin: [
-          'https://finanzas-ok-backend-589962407829.us-central1.run.app',
+          'https://finanzasok.xyz',
           'android:apk-key-hash:-eCdrJIpYllXkeZqeUGhKc1xoBKZm92XEzwxWOfugys',
           'https://finanzasok.xyz',
         ],
