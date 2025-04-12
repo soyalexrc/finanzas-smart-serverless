@@ -236,6 +236,7 @@ export class AuthService {
       expectedOrigin: [
         'https://finanzas-ok-backend-589962407829.us-central1.run.app',
         'android:apk-key-hash:-eCdrJIpYllXkeZqeUGhKc1xoBKZm92XEzwxWOfugys',
+        'https://finanzasok.xyz',
       ],
       expectedRPID: 'finanzas-ok-backend-589962407829.us-central1.run.app',
     });
@@ -324,6 +325,7 @@ export class AuthService {
         expectedOrigin: [
           'https://finanzas-ok-backend-589962407829.us-central1.run.app',
           'android:apk-key-hash:-eCdrJIpYllXkeZqeUGhKc1xoBKZm92XEzwxWOfugys',
+          'https://finanzasok.xyz',
         ],
         expectedRPID: 'finanzas-ok-backend-589962407829.us-central1.run.app',
         credential: {
