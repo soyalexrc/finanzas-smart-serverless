@@ -135,7 +135,7 @@ export class AuthService {
     // Generate the registration challenge
     const registrationOptions = await generateRegistrationOptions({
       rpName: 'Finanzas Inteligentes',
-      rpID: 'finanzas-ok-backend-589962407829.us-central1.run.app',
+      rpID: 'finanzasok.xyz',
       userName: email,
       userDisplayName: email,
       challenge,
@@ -186,7 +186,7 @@ export class AuthService {
     const safeTransports = ['usb', 'nfc', 'ble', 'internal', 'hybrid'];
 
     const authenticationOptions = await generateAuthenticationOptions({
-      rpID: 'finanzas-ok-backend-589962407829.us-central1.run.app',
+      rpID: 'finanzasok.xyz',
       userVerification: 'preferred',
       challenge,
       allowCredentials: passkeys.map((passkey) => ({
@@ -238,7 +238,7 @@ export class AuthService {
         'android:apk-key-hash:-eCdrJIpYllXkeZqeUGhKc1xoBKZm92XEzwxWOfugys',
         'https://finanzasok.xyz',
       ],
-      expectedRPID: 'finanzas-ok-backend-589962407829.us-central1.run.app',
+      expectedRPID: 'finanzasok.xyz',
     });
 
     console.log(`Verification result: ${JSON.stringify(verification)}`);
@@ -327,7 +327,7 @@ export class AuthService {
           'android:apk-key-hash:-eCdrJIpYllXkeZqeUGhKc1xoBKZm92XEzwxWOfugys',
           'https://finanzasok.xyz',
         ],
-        expectedRPID: 'finanzas-ok-backend-589962407829.us-central1.run.app',
+        expectedRPID: 'finanzasok.xyz',
         credential: {
           id: passkey.credentialId,
           publicKey: Buffer.from(passkey.publicKey, 'base64'),
