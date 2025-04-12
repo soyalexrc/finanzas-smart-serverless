@@ -449,7 +449,8 @@ export class AuthService {
     try {
       const result = await this.otpService.verifyOtp(dto);
       if (result) {
-        return this.startRegistration(dto.email);
+        const registrationOptions = await this.startRegistration(dto.email);
+        return res.status(200).json(registrationOptions);
       } else {
         return res.status(400).send({
           message: 'OTP inválido o expirado',
