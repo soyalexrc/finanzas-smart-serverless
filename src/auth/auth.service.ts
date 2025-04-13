@@ -273,6 +273,7 @@ export class AuthService {
       expectedChallenge: challengeToUse,
       expectedOrigin: [
         'https://finanzasok.xyz',
+        'http://localhost:3001',
         'android:apk-key-hash:-eCdrJIpYllXkeZqeUGhKc1xoBKZm92XEzwxWOfugys',
       ],
       expectedRPID: this.RP_ID,
@@ -362,6 +363,7 @@ export class AuthService {
         expectedChallenge: challengeToUse,
         expectedOrigin: [
           'https://finanzasok.xyz',
+          'http://localhost:3001',
           'android:apk-key-hash:-eCdrJIpYllXkeZqeUGhKc1xoBKZm92XEzwxWOfugys',
         ],
         expectedRPID: this.RP_ID,
