@@ -9,7 +9,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { PasskeySchema } from './entities/passkey.entity';
 import {OtpSchema} from "./entities/otp.entity";
-import { OtpService } from './otp/otp.service';
+import { OtpService } from '../common/services/otp/otp.service';
 
 @Module({
   imports: [

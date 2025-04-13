@@ -1,9 +1,9 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { CreateOtpDto } from '../dto/create-otp.dto';
-import { Otp } from '../entities/otp.entity';
-import { VerifyOtpDto } from '../dto/verify-otp.dto';
+import { CreateOtpDto } from '../../../auth/dto/create-otp.dto';
+import { Otp } from '../../../auth/entities/otp.entity';
+import { VerifyOtpDto } from '../../../auth/dto/verify-otp.dto';
 
 @Injectable()
 export class OtpService {

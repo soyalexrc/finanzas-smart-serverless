@@ -21,7 +21,7 @@
     "build:docker": "docker build --platform=linux/amd64 -t finanzas-ok-backend .",
     "build:docker-tagged": "docker build --platform=linux/amd64 -t gcr.io/finanzas-ok-8c956/finanzas-ok-backend .",
     "push:docker": "docker push gcr.io/finanzas-ok-8c956/finanzas-ok-backend:latest",
-    "deploy:cloud-run": "gcloud run deploy finanzas-ok-backend \\\n --image gcr.io/finanzas-ok-8c956/finanzas-ok-backend:latest \\\n --platform managed \\\n --region us-central1 \\\n --allow-unauthenticated \\\n --clear-env-vars \\\n --set-secrets JWT_SECRET=jwt-secret:latest,MONGO_URI=mongo-uri:latest,MAILGUN_API_KEY=mailgun-api-key:latest"
+    "deploy:cloud-run": "gcloud run deploy finanzas-ok-backend \\\n --image gcr.io/finanzas-ok-8c956/finanzas-ok-backend:latest \\\n --platform managed \\\n --region us-central1 \\\n --allow-unauthenticated \\\n --clear-env-vars \\\n --set-secrets JWT_SECRET=jwt-secret:latest,MONGO_URI=mongo-uri:latest,MAILGUN_API_KEY=mailgun-api-key:latest,WEBAUTHN_RP_ID=webauthn-rp-id:latest"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

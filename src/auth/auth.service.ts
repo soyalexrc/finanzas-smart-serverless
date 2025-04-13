@@ -16,13 +16,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { Passkey } from './entities/passkey.entity';
 import { ConfigService } from '@nestjs/config';
 import Mailgun from 'mailgun.js';
-import { OtpService } from './otp/otp.service';
+import { OtpService } from '../common/services/otp/otp.service';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { EmailTemplateType } from '../common/enums/email-templates';
 
 @Injectable()
 export class AuthService {
   private mg;
+  private RP_ID = '';
   constructor(
     @InjectModel('User') private readonly userModel: Model<User>,
     @InjectModel('Passkey') private readonly passkeyModel: Model<Passkey>,
@@ -31,6 +32,8 @@ export class AuthService {
     private configService: ConfigService,
   ) {
     const mailgun = new Mailgun(FormData);
+    this.RP_ID =
+      this.configService.get<string>('WEBAUTHN_RP_ID') || 'finanzasok.xyz';
     this.mg = mailgun.client({
       username: 'api',
       key: this.configService.get('MAILGUN_API_KEY')!,
@@ -63,6 +66,18 @@ export class AuthService {
           message: 'No se encontro el usuario',
         });
       } else {
+
+        // Check if the user has previous password
+        if (!user.password) {
+          const hashedPassword = await bcrypt.hash(password, 10);
+          user.password = hashedPassword;
+          await user.save();
+          return res.status(200).json({
+            message: `Bienvenido ${!isRegister && 'de vuelta'}, ${user.firstname}!`,
+            user: { ...user, access_token: this.login(user).access_token },
+          });
+        }
+
         const passwordValidation = await bcrypt.compare(
           password,
           user.password,
@@ -135,7 +150,7 @@ export class AuthService {
     // Generate the registration challenge
     const registrationOptions = await generateRegistrationOptions({
       rpName: 'Finanzas Inteligentes',
-      rpID: 'finanzasok.xyz',
+      rpID: this.RP_ID,
       userName: email,
       userDisplayName: email,
       challenge,
@@ -163,15 +178,13 @@ export class AuthService {
     console.log(`Stored challenge for email: ${email}`);
 
     // Return the challenge to the client
-    return { ...registrationOptions, challenge };
+    return { registrationOptions, challenge };
   }
 
-  async startAuthentication(email: string) {
-    console.log(`Starting authentication for email: ${email}`);
+  async startAuthentication(email: string, platform: string) {
+    console.log(`Starting authentication for email: ${email} and platform: ${platform}`);
     const user = await this.userModel.findOne({ email });
     let passkeys: Passkey[] = [];
-    const challenge = uuidv4(); // Store this in the DB for the user
-    console.log(`Generated challenge: ${challenge}`);
 
     if (!user) {
       console.error(`User not found: ${email}`);
@@ -179,14 +192,39 @@ export class AuthService {
     }
 
     passkeys = await this.passkeyModel.find({ user: user._id });
-    const allPasskeys = await this.passkeyModel.find();
-    console.log(allPasskeys);
     console.log(`Found passkeys: ${JSON.stringify(passkeys)}`);
+
+    if (passkeys.length === 0 || !passkeys) {
+      console.warn(`No passkeys found for user: ${email}`);
+      const payload = await this.startRegistration(email);
+      return {
+        ...payload,
+        action: 'REGISTER',
+        message: 'No passkeys found. Please register.',
+      };
+    }
+
+    // Check if the platform is supported by any passkey
+    const platformSupported = passkeys.find((passkey) => passkey.platform === platform);
+
+    if (!platformSupported) {
+      const payload = await this.startRegistration(email);
+
+      console.warn(`No passkeys found for the platform: ${platform}`);
+      return {
+        ...payload,
+        action: 'REGISTER',
+        message: `No passkeys found for the platform: ${platform}. Please register.`,
+      };
+    }
+
+    const challenge = uuidv4(); // Store this in the DB for the user
+    console.log(`Generated challenge: ${challenge}`);
 
     const safeTransports = ['usb', 'nfc', 'ble', 'internal', 'hybrid'];
 
     const authenticationOptions = await generateAuthenticationOptions({
-      rpID: 'finanzasok.xyz',
+      rpID: this.RP_ID,
       userVerification: 'preferred',
       challenge,
       allowCredentials: passkeys.map((passkey) => ({
@@ -205,10 +243,10 @@ export class AuthService {
     await this.createOrUpdateUserByEmail(email, { challenge });
     console.log(`Stored challenge for email: ${email}`);
 
-    return { ...authenticationOptions, challenge };
+    return { authenticationOptions, challenge, action: 'LOGIN', message: 'Passkey found. Please authenticate.' };
   }
 
-  async completeRegistration(email: string, response: any, challenge?: string) {
+  async completeRegistration(email: string, response: any, platform: string, challenge?: string) {
     console.log(`Completing registration for email: ${email}`);
     let challengeToUse: string = '';
     const user = await this.userModel.findOne({ email });
@@ -237,7 +275,7 @@ export class AuthService {
         'https://finanzasok.xyz',
         'android:apk-key-hash:-eCdrJIpYllXkeZqeUGhKc1xoBKZm92XEzwxWOfugys',
       ],
-      expectedRPID: 'finanzasok.xyz',
+      expectedRPID: this.RP_ID,
     });
 
     console.log(`Verification result: ${JSON.stringify(verification)}`);
@@ -254,6 +292,7 @@ export class AuthService {
         credentialId: credential.id,
         publicKey: Buffer.from(credential.publicKey).toString('base64'),
         counter: credential.counter,
+        platform,
         deviceType: credentialDeviceType,
         webAuthnUserID: user._id.toString(),
       };
@@ -297,7 +336,7 @@ export class AuthService {
       console.error(`User not found: ${email}`);
       throw new Error('User not found');
     }
-
+ 
     const passkey: Passkey | null = await this.passkeyModel.findOne({
       user: user._id,
       credentialId: response.id,
@@ -325,7 +364,7 @@ export class AuthService {
           'https://finanzasok.xyz',
           'android:apk-key-hash:-eCdrJIpYllXkeZqeUGhKc1xoBKZm92XEzwxWOfugys',
         ],
-        expectedRPID: 'finanzasok.xyz',
+        expectedRPID: this.RP_ID,
         credential: {
           id: passkey.credentialId,
           publicKey: Buffer.from(passkey.publicKey, 'base64'),
@@ -409,7 +448,7 @@ export class AuthService {
       }
 
       if (user) {
-        return await this.startAuthentication(email);
+        return await this.startAuthentication(email, '');
       }
     } catch (error) {
       throw new InternalServerErrorException(
@@ -423,7 +462,7 @@ export class AuthService {
     return passkeys && passkeys.length > 0;
   }
 
-  private async sendOtpEmail(
+  async sendOtpEmail(
     email: string,
     otp: string,
     template: EmailTemplateType,
@@ -443,6 +482,37 @@ export class AuthService {
       }),
     });
     console.log(data); // logs response data
+  }
+
+  async checkUserByEmail(email: string) {
+    try {
+      const user = await this.userModel.findOne({ email });
+      if (!user) {
+        const otp = await this.otpService.generateOtp({ email });
+        await this.sendOtpEmail(
+          email,
+          otp,
+          EmailTemplateType.VERIFY_EMAIL_FOR_REGISTRATION,
+          'Verificación de correo electrónico',
+        );  
+        return {
+          message: 'Enviamos un codigo de verificación a tu correo',
+          userFound: false,
+          otpSend: true
+        };
+      } else {
+        return {
+          message: 'Usuario verificado correctamente',
+          userFound: true,
+          otpSend: false
+        };
+      }
+    }
+    catch (error) {
+      throw new InternalServerErrorException(
+        `Error al consultar el usuario: ${error.message}`,
+      );
+    }
   }
 
   async validateEmailForRegister(dto: VerifyOtpDto, res: Response) {

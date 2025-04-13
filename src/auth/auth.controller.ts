@@ -6,13 +6,15 @@ import {
   Res,
   Get,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { Response } from 'express';
 import { CreateOtpDto } from './dto/create-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
-import { OtpService } from './otp/otp.service';
+import { OtpService } from '../common/services/otp/otp.service';
+import { EmailTemplateType } from 'src/common/enums/email-templates';
 
 @Controller('auth')
 export class AuthController {
@@ -53,19 +55,21 @@ export class AuthController {
     body: {
       email: string;
       registrationResponse: any;
+      platform: string;
       challenge?: string;
     },
   ) {
     return await this.authService.completeRegistration(
       body.email,
       body.registrationResponse,
+      body.platform,
       body.challenge,
     );
   }
 
   @Post('start-authentication')
-  async startAuthentication(@Body() body: { email: string }) {
-    return await this.authService.startAuthentication(body.email);
+  async startAuthentication(@Body() body: { email: string, platform: string }) {
+    return await this.authService.startAuthentication(body.email, body.platform);
   }
 
   @Get('getPasskeysByUserId')
@@ -102,15 +106,31 @@ export class AuthController {
     return await this.authService.validateEmailForRegister(dto, res);
   }
 
+  @Post('checkUserByEmail')
+  async checkUserByEmail(@Body() body: { email: string }) {
+    return await this.authService.checkUserByEmail(body.email);
+  }
+
   @Post('request-otp')
   async requestOtp(@Body() dto: CreateOtpDto) {
-    await this.otpService.generateOtp(dto);
-    return { message: 'OTP enviado al correo' };
+    const code = await this.otpService.generateOtp(dto);;
+    await this.authService.sendOtpEmail(
+      dto.email,
+      code,
+      EmailTemplateType.VERIFY_EMAIL_FOR_REGISTRATION,
+      'Verifica tu correo electrónico',
+      dto.email,
+    );
+    return { message: 'OTP enviado' };
   }
 
   @Post('verify-otp')
   async verifyOtp(@Body() dto: VerifyOtpDto) {
-    await this.otpService.verifyOtp(dto);
-    return { message: 'OTP válido' };
+    const result = await this.otpService.verifyOtp(dto);
+    if (result) {
+      return { message: 'OTP válido' }
+    } else {
+      throw new BadRequestException('OTP inválido o ya utilizado');
+    }
   }
 }

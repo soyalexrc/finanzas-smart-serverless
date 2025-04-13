@@ -16,6 +16,9 @@ export class Passkey {
   transports: string[];
 
   @Prop()
+  platform: string;
+
+  @Prop()
   counter: number;
 
   @Prop()
