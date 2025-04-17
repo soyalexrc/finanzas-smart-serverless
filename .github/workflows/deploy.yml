@@ -45,3 +45,17 @@ jobs:
             --allow-unauthenticated \
             --clear-env-vars \
             --set-secrets JWT_SECRET=jwt-secret:latest,MONGO_URI=mongo-uri:latest,MAILGUN_API_KEY=mailgun-api-key:latest,WEBAUTHN_RP_ID=webauthn-rp-id:latest
+
+      - name: Notify Discord on Success
+        if: success()
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{"content": "Finanzas Smart Severless Deployment to Cloud Run was **successful**! 🚀"}' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Notify Discord on Failure
+        if: failure()
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{"content": "Finanzas Smart Severless Deployment to Cloud Run **failed**. Please check the workflow logs for more details. ⚠️"}' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
