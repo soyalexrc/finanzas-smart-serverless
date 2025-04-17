@@ -44,7 +44,7 @@ jobs:
             --region us-central1 \
             --allow-unauthenticated \
             --clear-env-vars \
-            --set-secrets JWT_SECRET=jwt-secret:latest,MONGO_URI=mongo-uri:latest,MAILGUN_API_KEY=mailgun-api-key:latest,WEBAUTHN_RP_ID=webauthn-rp-id:latest
+            --set-secrets JWT_SECRET=jwt-secret:latest,MONGO_URI=mongo-uri:latest,MAILGUN_API_KEY=mailgun-api-key:latest,WEBAUTHN_RP_ID=webauthn-rp-id:latest,DISCORD_WEBHOOK_URL=discord-webhook-url:latest
 
       - name: Notify Discord on Success
         if: success()
