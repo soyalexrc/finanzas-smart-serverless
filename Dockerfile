@@ -28,7 +28,7 @@ RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
 
 # Copy the .env file (optional, but usually unnecessary for Cloud Run)
-COPY .env .env
+# COPY .env .env
 
 # Set environment variables (optional)
 ENV NODE_ENV=production
