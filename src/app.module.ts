@@ -13,6 +13,8 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { AppController } from './app.controller';
 import { DiscordNotifyService } from './common/services/discord-notify/discord-notify.service';
+import { HttpModule } from '@nestjs/axios';
+import {NotificationController} from "./common/controllers/notification/notification.controller";
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -27,6 +29,10 @@ import { DiscordNotifyService } from './common/services/discord-notify/discord-n
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
     }),
+    HttpModule.register({
+      timeout: 30000,
+      maxRedirects: 5,
+    }),
     AuthModule,
     UserModule,
     CalendarModule,
@@ -38,7 +44,7 @@ import { DiscordNotifyService } from './common/services/discord-notify/discord-n
     CalendarModule,
     AppModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, NotificationController],
   providers: [DiscordNotifyService],
 })
 export class AppModule {}
