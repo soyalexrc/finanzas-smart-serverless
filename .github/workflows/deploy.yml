@@ -27,6 +27,9 @@ jobs:
           project_id: finanzas-ok-8c956
           install_components: "beta"
 
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker gcr.io
+
       - name: Docker Build
         run: docker build --platform=linux/amd64 -t gcr.io/finanzas-ok-8c956/finanzas-ok-backend .
 
