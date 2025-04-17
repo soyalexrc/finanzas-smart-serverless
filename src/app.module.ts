@@ -12,6 +12,7 @@ import { CalendarModule } from './calendar/calendar.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { AppController } from './app.controller';
+import { DiscordNotifyService } from './common/services/discord-notify/discord-notify.service';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -38,6 +39,6 @@ import { AppController } from './app.controller';
     AppModule,
   ],
   controllers: [AppController],
-  providers: [],
+  providers: [DiscordNotifyService],
 })
 export class AppModule {}
