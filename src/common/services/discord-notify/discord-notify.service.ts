@@ -3,7 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { NotificationContentDto } from '../../dto/notification.dto';
 import { firstValueFrom } from 'rxjs';
 
-type WebhookType = 'error' | 'onboarding' | 'purchases';
+type WebhookType = 'error' | 'onboarding' | 'purchase';
 
 @Injectable()
 export class DiscordNotifyService {
